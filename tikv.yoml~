@@ -1,0 +1,6 @@
+[rocksdb]
+write-buffer-limit = "7GB"
+[storage]
+engine = "partitioned-raft-kv"
+[storage.block-cache]
+capacity = "1GB"

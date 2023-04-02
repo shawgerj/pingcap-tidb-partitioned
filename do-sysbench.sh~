@@ -1,0 +1,9 @@
+#!/bin/bash
+
+for i in {1..7}
+do
+    sed -rie 's/(write-buffer-limit \= )\"\w+\"/\1'"\"${i}GB\""'/i' tikv.yoml
+    sed -rie 's/(capacity \= )\"\w+\"/\1'"\"$((8-i))GB\""'/i' tikv.yoml
+    
+	cat tikv.yoml
+done
