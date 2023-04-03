@@ -1,0 +1,136 @@
+* Experimental Results
+** Prepare time
+#+name: prepare-time
+#+begin_src bash :results table
+    # WB  CAP  TIME (mm:ss)
+    for i in {1..7}
+    do
+        wb=$((i))
+        cap=$((8-i))
+
+        infile=wb${wb}_cap${cap}_prepare.time
+        awk -v w="${wb}" -v c="${cap}" 'NR==1 { print w, c, substr($3,0,7) }' OFS="\t" $infile
+    done
+#+end_src
+
+#+RESULTS: prepare-time
+| 1 | 7 | 64:37.0 |
+| 2 | 6 | 58:34.7 |
+| 3 | 5 | 59:03.8 |
+| 4 | 4 | 57:21.6 |
+| 5 | 3 | 59:48.1 |
+| 6 | 2 | 58:52.8 |
+| 7 | 1 | 46:58.9 |
+
+#+name: prepare-time-chart
+#+begin_src gnuplot :var data=prepare-time() :file prepare-time.png
+  reset
+  set title "8GB total mem, 128 table, 2mil rows/table -- 100% write"
+  set xlabel "Write buffer (GB)"
+  set ylabel "Elapsed time (100% write)"
+
+  set yrange [0:*]
+  set ydata time
+  set timefmt "%M:%S"
+  set terminal png size 500,375
+  plot data u 1:3 with lines notitle
+#+end_src
+
+#+RESULTS: prepare-time-chart
+[[file:prepare-time.png]]
+
+** readonly detail
+#+name: parse-detail
+#+begin_src bash :var infile="" :results table
+  # SEC  TPS  QPS  LAT95
+  awk '/^\[/ { print substr($2,0,length($2)-1), $7, $9, $14 }' OFS="\t" $infile
+#+end_src
+
+#+RESULTS: parse-detail
+
+#+name: readonly-qps-chart
+#+begin_src gnuplot :var wb1=parse-detail(infile=(expand-file-name "wb1_cap7_readonly.out")) wb2=parse-detail(infile=(expand-file-name "wb2_cap6_readonly.out")) wb3=parse-detail(infile=(expand-file-name "wb3_cap5_readonly.out")) wb4=parse-detail(infile=(expand-file-name "wb4_cap4_readonly.out")) wb5=parse-detail(infile=(expand-file-name "wb5_cap3_readonly.out")) wb6=parse-detail(infile=(expand-file-name "wb6_cap2_readonly.out")) wb7=parse-detail(infile=(expand-file-name "wb7_cap1_readonly.out")) :file readonly-qps.png
+  reset
+  set title "8GB total mem, 128 table, 2mil rows/table Readonly"
+  set xlabel "Time (sec)"
+  set ylabel "QPS"
+
+  set yrange [20000:30000]
+  set terminal png size 500,375
+  plot wb1 u 1:3 with lines title "wb1", \
+       wb2 u 1:3 with lines title "wb2", \
+       wb3 u 1:3 with lines title "wb3", \
+       wb4 u 1:3 with lines title "wb4", \
+       wb5 u 1:3 with lines title "wb5", \
+       wb6 u 1:3 with lines title "wb6", \
+       wb7 u 1:3 with lines title "wb7"
+#+end_src
+
+#+RESULTS: readonly-qps-chart
+[[file:readonly-qps.png]]
+
+#+name: readonly-lat95-chart
+#+begin_src gnuplot :var wb1=parse-detail(infile=(expand-file-name "wb1_cap7_readonly.out")) wb2=parse-detail(infile=(expand-file-name "wb2_cap6_readonly.out")) wb3=parse-detail(infile=(expand-file-name "wb3_cap5_readonly.out")) wb4=parse-detail(infile=(expand-file-name "wb4_cap4_readonly.out")) wb5=parse-detail(infile=(expand-file-name "wb5_cap3_readonly.out")) wb6=parse-detail(infile=(expand-file-name "wb6_cap2_readonly.out")) wb7=parse-detail(infile=(expand-file-name "wb7_cap1_readonly.out")) :file readonly-lat95.png
+  reset
+  set title "8GB total mem, 128 table, 2mil rows/table Readonly"
+  set xlabel "Time (sec)"
+  set ylabel "QPS"
+
+  set yrange [0:100]
+  set terminal png size 500,375
+  plot wb1 u 1:4 with lines title "wb1", \
+       wb2 u 1:4 with lines title "wb2", \
+       wb3 u 1:4 with lines title "wb3", \
+       wb4 u 1:4 with lines title "wb4", \
+       wb5 u 1:4 with lines title "wb5", \
+       wb6 u 1:4 with lines title "wb6", \
+       wb7 u 1:4 with lines title "wb7"
+#+end_src
+
+#+RESULTS: readonly-lat95-chart
+[[file:readonly-lat95.png]]
+
+** RW benchmark
+#+name: rw-qps-chart
+#+begin_src gnuplot :var wb1=parse-detail(infile=(expand-file-name "wb1_cap7_rw.out")) wb2=parse-detail(infile=(expand-file-name "wb2_cap6_rw.out")) wb3=parse-detail(infile=(expand-file-name "wb3_cap5_rw.out")) wb4=parse-detail(infile=(expand-file-name "wb4_cap4_rw.out")) wb5=parse-detail(infile=(expand-file-name "wb5_cap3_rw.out")) wb6=parse-detail(infile=(expand-file-name "wb6_cap2_rw.out")) wb7=parse-detail(infile=(expand-file-name "wb7_cap1_rw.out")) :file rw-qps.png
+    reset
+    set title "8GB total mem, 128 table, 2mil rows/table RW"
+    set xlabel "Time (sec)"
+    set ylabel "QPS"
+
+    set yrange [10000:25000]
+    set terminal png size 500,375
+    plot wb1 u 1:3 with lines title "wb1", \
+         wb7 u 1:3 with lines title "wb7"
+  #       wb2 u 1:3 with lines title "wb2", \
+  #       wb3 u 1:3 with lines title "wb3", \
+  #       wb4 u 1:3 with lines title "wb4", \
+  #       wb5 u 1:3 with lines title "wb5", \
+  #       wb6 u 1:3 with lines title "wb6", \
+         wb7 u 1:3 with lines title "wb7"
+#+end_src
+
+#+RESULTS: rw-qps-chart
+[[file:rw-qps.png]]
+
+#+name: rw-lat95-chart
+#+begin_src gnuplot :var wb1=parse-detail(infile=(expand-file-name "wb1_cap7_rw.out")) wb2=parse-detail(infile=(expand-file-name "wb2_cap6_rw.out")) wb3=parse-detail(infile=(expand-file-name "wb3_cap5_rw.out")) wb4=parse-detail(infile=(expand-file-name "wb4_cap4_rw.out")) wb5=parse-detail(infile=(expand-file-name "wb5_cap3_rw.out")) wb6=parse-detail(infile=(expand-file-name "wb6_cap2_rw.out")) wb7=parse-detail(infile=(expand-file-name "wb7_cap1_rw.out")) :file rw-lat95.png
+  reset
+  set title "8GB total mem, 128 table, 2mil rows/table RW"
+  set xlabel "Time (sec)"
+  set ylabel "QPS"
+  set key left bottom
+
+  set yrange [0:100]
+  set terminal png size 500,375
+  plot wb1 u 1:4 with lines title "wb1", \
+       wb2 u 1:4 with lines title "wb2", \
+       wb3 u 1:4 with lines title "wb3", \
+       wb4 u 1:4 with lines title "wb4", \
+       wb5 u 1:4 with lines title "wb5", \
+       wb6 u 1:4 with lines title "wb6", \
+       wb7 u 1:4 with lines title "wb7"
+#+end_src
+
+#+RESULTS: rw-lat95-chart
+[[file:rw-lat95.png]]
