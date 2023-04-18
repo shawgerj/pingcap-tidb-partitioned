@@ -1,8 +1,8 @@
 import subprocess
 
-# create groups of 12, 16, ..., 32GB memory
-names = [7, 8, 9, 10, 11, 12]
-mbs = [int(8 + (x * 4)) for x in names]
+# in GB
+names = [24, 32, 40]
+mbs = [int(1024 * x) for x in names]
 
 for item in names:
     subprocess.run("sudo cgcreate -g memory:{}".format(item), shell=True)
